@@ -1,0 +1,7 @@
+node_modules/
+src/assets/ocx
+build/
+dist/
+.vscode/
+
+.DS_Store

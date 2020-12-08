@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head> 
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1" name="viewport" />
+    <title>签到</title>
+    <meta name="format-detection" content="telephone=no">
+    <style>
+        body,div,p,canvas,span{
+            margin: 0px;
+            padding: 0px;
+        }
+        p{
+            height: 40px;
+            width: 100%;
+            line-height: 40px;
+            font-size: 14px;
+            border-bottom: 2px solid #fff;
+            display: inline-flex;
+            text-align: center;
+        }
+        p span{
+            color: #fff;
+            display: block;
+            width: 33.33%;
+        }
+        p span:nth-of-type(1){
+            background-color: #c3b8b8;
+        }
+        p span:nth-of-type(2){
+            background-color: #bf2b2b;
+        }
+        p span:nth-of-type(3){
+            background-color: #04BE02;
+        }
+        p span:nth-of-type(2),p span:nth-of-type(3){
+            /*position: relative;*/
+            /*right: -50%;*/
+            border-left: 1px solid #aaa;
+        }
+    </style>
+    <script src="/libs/jquery/jquery-3.2.1.min.js"></script>
+ 
+</head>
+<body>
+  <div>
+    <p>
+      <span id="btn-close">关闭</span> 
+      <span onclick="clean();">清空</span>
+      <span onclick="save();">确认</span>
+    </p>
+  </div>
+  <canvas id="myCanvas"></canvas>
+</body>
+ 
+</html>
+ 
+<script>
+  var canvas, context;
+  canvas = document.getElementById('myCanvas');
+
+  if (canvas.width  < window.innerWidth) {
+    canvas.width  = window.innerWidth;
+  } else {
+    canvas.width =800;
+  }
+
+  if (canvas.height < window.innerHeight) {
+    canvas.height = 620;
+  }else{
+    canvas.height = 620;
+  }
+
+  //验证canvas画布是否为空函数
+  function isCanvasBlank(canvas) {
+    var blank = document.createElement('canvas');//系统获取一个空canvas对象
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+    return canvas.toDataURL() == blank.toDataURL();//比较值相等则为空
+  }
+
+  context = canvas.getContext('2d');
+  context.lineWidth = 2; //设置画笔粗细
+  context.strokeStyle = "#f00";
+  context.lineJoin = "round"; //设置画笔轨迹基于圆点拼接
+
+  var mousePress = false;
+  var last = null;
+
+  function beginDraw(event) {
+    mousePress = true;
+  }
+
+  function endDraw(event) {
+    mousePress = false;
+    event.preventDefault();
+    last = null;
+  }
+  function drawing(event) {
+    event.preventDefault();
+    if (!mousePress) return;
+    var xy = GetPos(event);
+    if (last != null) {
+        context.beginPath();
+        context.moveTo(last.x, last.y);
+        context.lineTo(xy.x, xy.y);
+        context.stroke();
+    }
+    last = xy;
+  }
+
+  function GetPos(event) {
+    var isTouch = event.type.indexOf('touch') >= 0 ? true : false;
+    var x = isTouch ? event.touches[0].pageX : event.offsetX + event.target.offsetLeft;
+    var y = isTouch ? event.touches[0].pageY-40 : (event.offsetY + event.target.offsetTop)-40;
+    return { x: x, y: y };
+  }
+
+
+  function save() {
+    // 修复黑色背景色为白色
+    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);   
+    for(var i = 0; i < imageData.data.length; i += 4) {   
+        // 当该像素是透明的，则设置成白色   
+        if(imageData.data[i + 3] == 0) {   
+            imageData.data[i] = 255;   
+            imageData.data[i + 1] = 255;   
+            imageData.data[i + 2] = 255;   
+            imageData.data[i + 3] = 255;    
+        }   
+    }   
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, canvas.width, canvas.height);  
+    context.putImageData(imageData, 0, 0); 
+
+    var data = canvas.toDataURL("image/png"); //把canvas画板上的内容转成指定格式图片数据，并进行Base64编码
+    if(data){
+      if(isCanvasBlank(canvas)){
+          alert("请签名");
+          return;
+      }
+    }
+    console.log(data)
+    var html="<img src='"+data+"'>";
+    //代码省略...... 
+  }
+
+  function clean() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  canvas.onmousedown = beginDraw;
+  canvas.onmousemove = drawing;
+  canvas.onmouseup = endDraw;
+  canvas.addEventListener('touchstart', beginDraw, false);
+  canvas.addEventListener('touchmove', drawing, false);
+  canvas.addEventListener('touchend', endDraw, false);
+</script>
